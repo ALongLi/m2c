@@ -1,5 +1,4 @@
 import marked from "marked";
-import querystring from "./querystring";
 
 let defaultLanguageMap = {
   "": "none",
@@ -61,7 +60,8 @@ class ConfluenceRenderer {
     }
 
     // Convert to a string
-    stylingOptions = querystring(stylingOptions, "|");
+    let paramsObj = new URLSearchParams(stylingOptions);
+    stylingOptions = paramsObj.toString().replace(/&/g, "|");
 
     if (stylingOptions) {
       stylingOptions = `:${stylingOptions}`;
@@ -184,39 +184,31 @@ function defaultHrefRewrite(href) {
   return href;
 }
 
-export default (markdown, options) => {
-  debugger;
+export default (markdown, options = {}) => {
   let result;
-
-  // Set defaults.
-  options = options || {};
-  options.marked = options.marked || {};
-  options.codeLanguageMap = options.codeLanguageMap || defaultLanguageMap;
-  options.codeStyling = options.codeStyling || {
-    theme: "RDark",
-    linenumbers: true
+  let defaultOpt = {
+    marked: {},
+    codeLanguageMap: defaultLanguageMap,
+    codeStyling: {
+      theme: "RDark",
+      linenumbers: true
+    },
+    codeCollapseAt: 20,
+    linkRewrite: defaultHrefRewrite,
+    imageRewrite: defaultHrefRewrite
   };
-  options.codeCollapseAt = options.codeCollapseAt || 20;
-  options.linkRewrite = options.linkRewrite || defaultHrefRewrite;
-  options.imageRewrite = options.imageRewrite || defaultHrefRewrite;
 
-  // Always override this one property.
-  options.marked.renderer = new ConfluenceRenderer(options);
+  options = Object.assign({}, defaultOpt, options);
 
-  // Convert Buffers to strings.
   markdown = markdown.toString();
 
-  // Replace "\r\n" and "\r" with "\n".
   markdown = markdown.replace(/\r\n?/g, "\n");
 
-  // Convert.
-  result = marked(markdown, options.marked).trim();
+  result = marked(markdown, {
+    renderer: new ConfluenceRenderer(options)
+  });
 
-  // Fix the \r placeholder for list beginnings. See list() for more info.
-  result = result.replace(/\r/g, "");
-
-  // Remove trailing whitespace.
-  result = result.trim();
+  result = result.replace(/\r/g, "").trim();
 
   return result;
 };

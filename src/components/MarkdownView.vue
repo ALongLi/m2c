@@ -3,48 +3,29 @@
  * @Author: lal
  * @Date: 2019-12-03 10:56:03
  * @LastEditors: lal
- * @LastEditTime: 2019-12-03 14:58:07
+ * @LastEditTime: 2020-05-14 15:58:08
  -->
 <template>
   <div id="test" class="markdown-editor">
-    <textarea
-      id="editor"
-      class="editor"
-      :value="input"
-      @input="update"
-    ></textarea>
-    <textarea
-      id="preview"
-      class="preview"
-      readonly
-      v-html="confluenceWiki"
-    ></textarea>
+    <textarea id="editor" class="editor" :value="input" @input="update"></textarea>
+    <textarea id="preview" class="preview" readonly v-html="confluenceWiki"></textarea>
     <button class="btn copy" @click="copy">
       Copy
+    </button>
+    <button class="btn update" @click="updateApp">
+      更新
     </button>
   </div>
 </template>
 
 <script>
-// div.markdown-editor
-//   textarea.editor(
-//     :value="input"
-//     @input="update"
-//   )
-//   textarea.preview(
-//     v-html="confluenceWiki"
-//     readonly
-//   )
-//   button.btn.copy(
-//     :data-clipboard-text="confluenceWiki"
-//   ) Copy
 import { debounce } from "@/utils/utils.js";
-// import Clipboard from "clipboard";
 import md2cwm from "./md2cwm";
 import initialMarkdown from "./initialMarkdown.md";
+const { ipcRenderer } = require("electron");
+
 export default {
   name: "MarkdownView",
-
   data() {
     return {
       input: initialMarkdown
@@ -65,6 +46,9 @@ export default {
     update: function(e) {
       this.input = e.target.value;
     },
+    updateApp() {
+      ipcRenderer.send("update");
+    },
     copy() {
       let content = document.getElementById("preview");
       content.select();
@@ -73,8 +57,11 @@ export default {
     }
   },
   mounted() {
-    // this.clip = new Clipboard(".copy");
     this.update = debounce(this.update);
+    ipcRenderer.on("message", function(event, text) {
+      console.log("ss");
+      debugger;
+    });
   }
 };
 </script>
@@ -113,6 +100,11 @@ export default {
   position: fixed;
   top: 10px;
   right: 27px;
+}
+.update {
+  position: fixed;
+  top: 10px;
+  right: 200px;
 }
 
 .btn {

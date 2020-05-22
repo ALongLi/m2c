@@ -1,15 +1,78 @@
+/*
+ * @description:
+ * @Author: lal
+ * @Date: 2019-12-03 17:13:19
+ * @LastEditors: lal
+ * @LastEditTime: 2020-05-14 15:57:25
+ */
 "use strict";
 
-import { app, protocol, BrowserWindow } from "electron";
-import {
-  createProtocol,
-  installVueDevtools
-} from "vue-cli-plugin-electron-builder/lib";
+import { app, protocol, ipcMain, BrowserWindow } from "electron";
+import { createProtocol, installVueDevtools } from "vue-cli-plugin-electron-builder/lib";
 const isDevelopment = process.env.NODE_ENV !== "production";
-
+const log = require("electron-log");
+const { autoUpdater } = require("electron-updater");
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win;
+
+autoUpdater.logger = log;
+autoUpdater.logger.transports.file.level = "info";
+log.info("App starting...");
+
+const feedUrl = `http://127.0.0.1:80/win32`; // 更新包位置
+
+function sendStatusToWindow(text) {
+  log.info(text);
+  win.webContents.send("message", text);
+}
+
+let checkForUpdates = () => {
+  // 配置安装包远端服务器
+  autoUpdater.setFeedURL(feedUrl);
+
+  // 下面是自动更新的整个生命周期所发生的事件
+  autoUpdater.on("error", function(message) {
+    sendStatusToWindow("error", message);
+  });
+  autoUpdater.on("checking-for-update", function(message) {
+    sendStatusToWindow("checking-for-update", message);
+  });
+  autoUpdater.on("update-available", function(message) {
+    sendStatusToWindow("update-available", message);
+  });
+  autoUpdater.on("update-not-available", function(message) {
+    sendStatusToWindow("update-not-available", message);
+  });
+
+  // 更新下载进度事件
+  autoUpdater.on("download-progress", function(progressObj) {
+    sendStatusToWindow("downloadProgress", progressObj);
+  });
+  // 更新下载完成事件
+  autoUpdater.on("update-downloaded", function(
+    event,
+    releaseNotes,
+    releaseName,
+    releaseDate,
+    updateUrl,
+    quitAndUpdate
+  ) {
+    sendStatusToWindow("isUpdateNow");
+    ipcMain.on("updateNow", (e, arg) => {
+      autoUpdater.quitAndInstall();
+    });
+  });
+
+  //执行自动更新检查
+  autoUpdater.checkForUpdates();
+};
+
+// 主进程监听渲染进程传来的信息
+ipcMain.on("update", (e, arg) => {
+  console.log("update");
+  checkForUpdates();
+});
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
@@ -77,7 +140,9 @@ app.on("ready", async () => {
   }
   createWindow();
 });
-
+app.on("ready", function() {
+  autoUpdater.checkForUpdatesAndNotify();
+});
 // Exit cleanly on request from parent process in development mode.
 if (isDevelopment) {
   if (process.platform === "win32") {
