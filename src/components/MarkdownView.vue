@@ -3,7 +3,7 @@
  * @Author: lal
  * @Date: 2019-12-03 10:56:03
  * @LastEditors: lal
- * @LastEditTime: 2020-05-14 15:58:08
+ * @LastEditTime: 2020-05-22 14:09:45
  -->
 <template>
   <div id="test" class="markdown-editor">
@@ -59,7 +59,7 @@ export default {
   mounted() {
     this.update = debounce(this.update);
     ipcRenderer.on("message", function(event, text) {
-      console.log("ss");
+      console.log(text);
       debugger;
     });
   }

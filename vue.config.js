@@ -3,7 +3,7 @@
  * @Author: lal
  * @Date: 2019-12-03 11:37:46
  * @LastEditors: lal
- * @LastEditTime: 2020-05-22 13:53:11
+ * @LastEditTime: 2020-05-22 14:10:17
  */
 const path = require("path");
 // const environment = require("./environment");
@@ -46,7 +46,7 @@ module.exports = {
         publish: [
           {
             provider: "generic",
-            url: "http://127.0.0.1:80/" //这里是我本地开的服务器的地址
+            url: "http://127.0.0.1:9527/" //这里是我本地开的服务器的地址
           }
         ],
         nsis: {

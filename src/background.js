@@ -3,12 +3,16 @@
  * @Author: lal
  * @Date: 2019-12-03 17:13:19
  * @LastEditors: lal
- * @LastEditTime: 2020-05-14 15:57:25
+ * @LastEditTime: 2020-05-22 15:05:33
  */
 "use strict";
 
 import { app, protocol, ipcMain, BrowserWindow } from "electron";
 import { createProtocol, installVueDevtools } from "vue-cli-plugin-electron-builder/lib";
+import path from "path";
+// import fs from "fs";
+const fs = require("fs-extra");
+
 const isDevelopment = process.env.NODE_ENV !== "production";
 const log = require("electron-log");
 const { autoUpdater } = require("electron-updater");
@@ -20,7 +24,11 @@ autoUpdater.logger = log;
 autoUpdater.logger.transports.file.level = "info";
 log.info("App starting...");
 
-const feedUrl = `http://127.0.0.1:80/win32`; // 更新包位置
+const feedUrl = `http://127.0.0.1:9527/update`; // 更新包位置
+if (process.env.NODE_ENV === "development") {
+  autoUpdater.updateConfigPath = path.join(__dirname, "win-unpacked/resources/app-update.yml");
+  // mac的地址是'Contents/Resources/app-update.yml'
+}
 
 function sendStatusToWindow(text) {
   log.info(text);
@@ -30,6 +38,16 @@ function sendStatusToWindow(text) {
 let checkForUpdates = () => {
   // 配置安装包远端服务器
   autoUpdater.setFeedURL(feedUrl);
+  // 更新前，删除本地安装包 ↓
+  let updaterCacheDirName = "m2c-wiki-updater";
+  const updatePendingPath = path.join(
+    autoUpdater.app.baseCachePath,
+    updaterCacheDirName,
+    "pending"
+  );
+
+  log.info(updatePendingPath);
+  fs.emptyDir(updatePendingPath);
 
   // 下面是自动更新的整个生命周期所发生的事件
   autoUpdater.on("error", function(message) {
@@ -47,6 +65,7 @@ let checkForUpdates = () => {
 
   // 更新下载进度事件
   autoUpdater.on("download-progress", function(progressObj) {
+    log.info(parseInt(progressObj.percent));
     sendStatusToWindow("downloadProgress", progressObj);
   });
   // 更新下载完成事件
@@ -58,8 +77,8 @@ let checkForUpdates = () => {
     updateUrl,
     quitAndUpdate
   ) {
-    sendStatusToWindow("isUpdateNow");
     ipcMain.on("updateNow", (e, arg) => {
+      sendStatusToWindow("isUpdateNow");
       autoUpdater.quitAndInstall();
     });
   });
