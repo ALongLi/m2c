@@ -3,7 +3,7 @@
  * @Author: lal
  * @Date: 2019-12-03 10:56:03
  * @LastEditors: lal
- * @LastEditTime: 2020-05-22 14:09:45
+ * @LastEditTime: 2020-05-22 15:30:10
  -->
 <template>
   <div id="test" class="markdown-editor">
@@ -14,6 +14,10 @@
     </button>
     <button class="btn update" @click="updateApp">
       更新
+    </button>
+
+    <button class="btn install" @click="installApp">
+      安装
     </button>
   </div>
 </template>
@@ -49,6 +53,9 @@ export default {
     updateApp() {
       ipcRenderer.send("update");
     },
+    installApp() {
+      ipcRenderer.send("install");
+    },
     copy() {
       let content = document.getElementById("preview");
       content.select();
@@ -60,7 +67,6 @@ export default {
     this.update = debounce(this.update);
     ipcRenderer.on("message", function(event, text) {
       console.log(text);
-      debugger;
     });
   }
 };
@@ -105,6 +111,12 @@ export default {
   position: fixed;
   top: 10px;
   right: 200px;
+}
+
+.install {
+  position: fixed;
+  top: 10px;
+  right: 250px;
 }
 
 .btn {

@@ -3,7 +3,7 @@
  * @Author: lal
  * @Date: 2019-12-03 17:13:19
  * @LastEditors: lal
- * @LastEditTime: 2020-05-22 15:05:33
+ * @LastEditTime: 2020-05-22 15:48:37
  */
 "use strict";
 
@@ -24,7 +24,7 @@ autoUpdater.logger = log;
 autoUpdater.logger.transports.file.level = "info";
 log.info("App starting...");
 
-const feedUrl = `http://127.0.0.1:9527/update`; // 更新包位置
+const feedUrl = `http://192.168.36.45:9527/update`; // 更新包位置
 if (process.env.NODE_ENV === "development") {
   autoUpdater.updateConfigPath = path.join(__dirname, "win-unpacked/resources/app-update.yml");
   // mac的地址是'Contents/Resources/app-update.yml'
@@ -77,8 +77,7 @@ let checkForUpdates = () => {
     updateUrl,
     quitAndUpdate
   ) {
-    ipcMain.on("updateNow", (e, arg) => {
-      sendStatusToWindow("isUpdateNow");
+    ipcMain.on("install", () => {
       autoUpdater.quitAndInstall();
     });
   });
@@ -88,11 +87,10 @@ let checkForUpdates = () => {
 };
 
 // 主进程监听渲染进程传来的信息
-ipcMain.on("update", (e, arg) => {
+ipcMain.on("update", () => {
   console.log("update");
   checkForUpdates();
 });
-
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
   { scheme: "app", privileges: { secure: true, standard: true } }
@@ -160,7 +158,10 @@ app.on("ready", async () => {
   createWindow();
 });
 app.on("ready", function() {
+  checkForUpdates();
+
   autoUpdater.checkForUpdatesAndNotify();
+  autoUpdater.checkForUpdates();
 });
 // Exit cleanly on request from parent process in development mode.
 if (isDevelopment) {
